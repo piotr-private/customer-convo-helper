@@ -242,7 +242,7 @@ Return an answer in a following format:
     const isTimeoutError = error instanceof DOMException && error.name === "AbortError";
     if (isTimeoutError) {
       console.log("Request timed out after waiting for LLM response");
-      toast.error("Request timed out waiting for the AI response. Try again with a simpler query.");
+      Toast.error("Request timed out waiting for the AI response. Try again with a simpler query.");
       return {
         response: null,
         historicalEmails: [],
@@ -259,7 +259,7 @@ Return an answer in a following format:
     
     if (isCORSError) {
       console.log("CORS error detected, falling back to mock data");
-      toast.error("CORS policy prevented API access, using demo data instead");
+      Toast.error("CORS policy prevented API access, using demo data instead");
       
       // Return mock data as fallback when there's a CORS error
       const mockData = generateMockResponse(customerEmail);
@@ -273,7 +273,7 @@ Return an answer in a following format:
     
     // For other errors, return a more specific error message
     const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
-    toast.error(`Error: ${errorMessage}`);
+    Toast.error(`Error: ${errorMessage}`);
     
     return {
       response: null,
