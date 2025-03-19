@@ -18,10 +18,8 @@ export interface EmailResponse {
 export interface HistoricalEmail {
   id: string;
   properties: {
-    customer_email: string;
-    customer_name: string;
-    date: string;
-    content: string;
+    replying_to: string;
+    my_reply: string;
     category: string;
   };
   metadata: {
@@ -49,11 +47,9 @@ const generateMockResponse = (customerEmail: string): {
     {
       id: "email1",
       properties: {
-        customer_email: "john.smith@example.com",
-        customer_name: "John Smith",
-        date: "2025-02-15",
-        content: "Hi John, thanks for your question about our product features. We do offer what you're looking for, and I'd be happy to schedule a demo to show you how it works. Let me know what time works best for you!",
-        category: "Having question or objection"
+        my_reply: "Hi John, thanks for your question about our product features. We do offer what you're looking for, and I'd be happy to schedule a demo to show you how it works. Let me know what time works best for you!",
+        category: "Having question or objection",
+        replying_to: ""
       },
       metadata: {
         distance: 0.15
@@ -62,11 +58,9 @@ const generateMockResponse = (customerEmail: string): {
     {
       id: "email2",
       properties: {
-        customer_email: "sarah.jones@example.com",
-        customer_name: "Sarah Jones",
-        date: "2025-01-28",
-        content: "Hello Sarah, I understand your concern about pricing. Our premium plan does include all the features you mentioned, and there are no hidden fees. I've attached a detailed comparison sheet for your reference. Feel free to reach out if you have any other questions!",
-        category: "Having question or objection"
+        my_reply: "Hello Sarah, I understand your concern about pricing. Our premium plan does include all the features you mentioned, and there are no hidden fees. I've attached a detailed comparison sheet for your reference. Feel free to reach out if you have any other questions!",
+        category: "Having question or objection",
+        replying_to: ""
       },
       metadata: {
         distance: 0.25
@@ -75,11 +69,9 @@ const generateMockResponse = (customerEmail: string): {
     {
       id: "email3",
       properties: {
-        customer_email: "michael.brown@example.com",
-        customer_name: "Michael Brown",
-        date: "2025-03-05",
-        content: "Hi Michael, regarding your question about integration capabilities - yes, our platform can integrate with the software you're currently using. We use standard APIs for most integrations, and I'm happy to connect you with our technical team to discuss the specific requirements for your setup.",
-        category: "Having question or objection"
+        my_reply: "Hi Michael, regarding your question about integration capabilities - yes, our platform can integrate with the software you're currently using. We use standard APIs for most integrations, and I'm happy to connect you with our technical team to discuss the specific requirements for your setup.",
+        category: "Having question or objection",
+        replying_to: ""
       },
       metadata: {
         distance: 0.35
