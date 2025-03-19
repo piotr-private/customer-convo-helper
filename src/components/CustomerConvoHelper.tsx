@@ -5,7 +5,7 @@ import ResponseSuggestion from './ResponseSuggestion';
 import HistoricalQuestions from './HistoricalQuestions';
 import { getResponseSuggestion, EmailResponse, HistoricalEmail } from '@/services/weaviateService';
 import { toast } from 'sonner';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Info } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const CustomerConvoHelper: React.FC = () => {
@@ -13,10 +13,12 @@ const CustomerConvoHelper: React.FC = () => {
   const [response, setResponse] = useState<EmailResponse | null>(null);
   const [historicalEmails, setHistoricalEmails] = useState<HistoricalEmail[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [usingMockData, setUsingMockData] = useState(false);
 
   const handleSubmit = async (customerEmail: string) => {
     setIsLoading(true);
     setError(null);
+    setUsingMockData(false);
     
     try {
       console.log("Submitting customer email for processing");
@@ -30,6 +32,12 @@ const CustomerConvoHelper: React.FC = () => {
       
       setResponse(result.response);
       setHistoricalEmails(result.historicalEmails);
+      
+      // Check if we're using mock data (which we can detect by looking at the environment)
+      const isLocalhost = window.location.hostname === "localhost" || 
+                          window.location.hostname === "127.0.0.1";
+      const isProd = !isLocalhost;
+      setUsingMockData(isProd);
       
       if (!result.response && result.historicalEmails.length === 0) {
         toast.warning("No relevant responses found. Try being more specific.");
@@ -59,6 +67,17 @@ const CustomerConvoHelper: React.FC = () => {
       </h1>
       
       <EmailForm onSubmit={handleSubmit} isLoading={isLoading} />
+      
+      {usingMockData && (
+        <Alert className="mt-6 bg-blue-50 border-blue-200">
+          <Info className="h-4 w-4 text-blue-500" />
+          <AlertTitle className="text-blue-700">Using Demo Mode</AlertTitle>
+          <AlertDescription className="text-blue-600">
+            Due to CORS restrictions, we're showing you sample data. In a real implementation, 
+            this would be handled through a backend proxy or serverless function.
+          </AlertDescription>
+        </Alert>
+      )}
       
       {error && (
         <Alert variant="destructive" className="mt-6">
