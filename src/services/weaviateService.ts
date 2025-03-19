@@ -206,18 +206,18 @@ Return an answer in a following format:
     // Extract the generated response
     const generatedResponse = data?.data?.Get?.Filip?.[0]?._additional?.generate?.singleResult;
 
-    // Extract historical emails
-    const historicalEmails: HistoricalEmail[] = data?.data?.Get?.Filip?.map((email: any) => ({
-      id: email._additional.id,
-      properties: {
-        customer_email: email.properties.replying_to,
-        content: email.properties.my_reply,
-        category: email.properties.category
-      },
-      metadata: {
-        distance: email._additional.distance
-      }
-    })) || [];
+    // // Extract historical emails
+    // const historicalEmails: HistoricalEmail[] = data?.data?.Get?.Filip?.map((email: any) => ({
+    //   id: email._additional.id,
+    //   properties: {
+    //     customer_email: email.properties.replying_to,
+    //     content: email.properties.my_reply,
+    //     category: email.properties.category
+    //   },
+    //   metadata: {
+    //     distance: email._additional.distance
+    //   }
+    // })) || [];
 
     console.log("Processed historical emails:", historicalEmails.length);
 
