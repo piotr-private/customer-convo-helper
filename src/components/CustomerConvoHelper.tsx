@@ -5,18 +5,25 @@ import ResponseSuggestion from './ResponseSuggestion';
 import HistoricalQuestions from './HistoricalQuestions';
 import { getResponseSuggestion, EmailResponse, HistoricalEmail } from '@/services/weaviateService';
 import { toast } from 'sonner';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const CustomerConvoHelper: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<EmailResponse | null>(null);
   const [historicalEmails, setHistoricalEmails] = useState<HistoricalEmail[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (customerEmail: string) => {
     setIsLoading(true);
+    setError(null);
+    
     try {
+      console.log("Submitting customer email for processing");
       const result = await getResponseSuggestion(customerEmail);
       
       if (result.error) {
+        setError(result.error);
         toast.error(result.error);
         return;
       }
@@ -26,10 +33,14 @@ const CustomerConvoHelper: React.FC = () => {
       
       if (!result.response && result.historicalEmails.length === 0) {
         toast.warning("No relevant responses found. Try being more specific.");
+      } else {
+        toast.success("Response generated successfully");
       }
     } catch (error) {
       console.error("Error:", error);
-      toast.error("An unexpected error occurred");
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -48,6 +59,16 @@ const CustomerConvoHelper: React.FC = () => {
       </h1>
       
       <EmailForm onSubmit={handleSubmit} isLoading={isLoading} />
+      
+      {error && (
+        <Alert variant="destructive" className="mt-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            {error}. Please try again or contact support if the issue persists.
+          </AlertDescription>
+        </Alert>
+      )}
       
       {response && <ResponseSuggestion response={response} />}
       

@@ -27,12 +27,47 @@ export interface HistoricalEmail {
   };
 }
 
+// Initialize Weaviate client connection
+const initWeaviateClient = () => {
+  // In a browser environment, we don't actually create a client instance
+  // but instead ensure we have the correct configuration for fetch requests
+  console.log("Initializing Weaviate client connection configuration");
+  
+  // Return the configuration that will be used for requests
+  return {
+    baseUrl: WCD_URL,
+    headers: {
+      'Authorization': `Bearer ${WCD_API_KEY}`,
+      'X-OpenAI-Api-Key': OPENAI_KEY,
+      'Content-Type': 'application/json'
+    }
+  };
+};
+
+// Get a preconfigured client for requests
+const getWeaviateClient = (() => {
+  // Use closure to maintain a single client configuration
+  let clientConfig: ReturnType<typeof initWeaviateClient> | null = null;
+  
+  return () => {
+    if (!clientConfig) {
+      clientConfig = initWeaviateClient();
+    }
+    return clientConfig;
+  };
+})();
+
 export async function getResponseSuggestion(customerEmail: string): Promise<{
   response: EmailResponse | null;
   historicalEmails: HistoricalEmail[];
   error?: string;
 }> {
   try {
+    console.log("Getting response suggestion for:", customerEmail);
+    
+    // Get client configuration
+    const client = getWeaviateClient();
+    
     // Format the task for the LLM
     const task = `Based on the following examples of my previous communication, reply to this email: '${customerEmail}'
 
@@ -48,13 +83,10 @@ Return an answer in a following format:
 }`;
 
     // Make the API call to Weaviate
-    const response = await fetch(`${WCD_URL}/v1/graphql`, {
+    console.log("Making request to Weaviate GraphQL endpoint");
+    const response = await fetch(`${client.baseUrl}/v1/graphql`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${WCD_API_KEY}`,
-        'X-OpenAI-Api-Key': OPENAI_KEY
-      },
+      headers: client.headers,
       body: JSON.stringify({
         query: `
           {
@@ -97,6 +129,7 @@ Return an answer in a following format:
     }
 
     const data = await response.json();
+    console.log("Received data from Weaviate:", data);
     
     // Extract the generated response
     const generatedResponse = data?.data?.Get?.Filip?.[0]?._additional?.generate?.groupedResult;
@@ -105,6 +138,7 @@ Return an answer in a following format:
     if (generatedResponse) {
       try {
         emailResponse = JSON.parse(generatedResponse);
+        console.log("Parsed email response:", emailResponse);
       } catch (e) {
         console.error("Failed to parse generated response:", e);
       }
@@ -124,6 +158,8 @@ Return an answer in a following format:
         distance: email._additional.distance
       }
     })) || [];
+
+    console.log("Processed historical emails:", historicalEmails.length);
 
     return {
       response: emailResponse,
