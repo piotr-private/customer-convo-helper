@@ -1,5 +1,5 @@
 
-import { toast } from "sonner";
+import { toast } from `sonner`;
 
 // Weaviate connection details
 const WCD_URL = "https://1hsyybfpqouabtfuyxidg.c0.europe-west3.gcp.weaviate.cloud";
@@ -164,14 +164,14 @@ Return an answer in a following format:
     const response = await fetchWithTimeout(`${client.baseUrl}/v1/graphql`, {
       method: 'POST',
       headers: client.headers,
-      mode: 'cors', // Explicitly set cors mode
+      mode: 'cors', 
       body: JSON.stringify({
         query: `
           {
             Get {
               Filip(
                 nearText: {
-                  concepts: ["${customerEmail}"]
+                  concepts: ["${customerEmail.replace(/"/g, '\\"')}"]
                   targetVectors: ["replying_to_vector"]
                 }
                 where: {
@@ -185,16 +185,18 @@ Return an answer in a following format:
                   id
                   distance
                   generate(
-                    groupedTask: """${task}"""
+                    singlePrompt: """${task}"""
                   ) {
-                    groupedResult
+                    singleResult
                   }
                 }
-                customer_email
-                customer_name
-                date
-                content
-                category
+                properties {
+                  customer_email
+                  customer_name
+                  date
+                  content
+                  category
+                }
               }
             }
           }
@@ -210,27 +212,17 @@ Return an answer in a following format:
     console.log("Received data from Weaviate:", data);
     
     // Extract the generated response
-    const generatedResponse = data?.data?.Get?.Filip?.[0]?._additional?.generate?.groupedResult;
-    let emailResponse: EmailResponse | null = null;
-    
-    if (generatedResponse) {
-      try {
-        emailResponse = JSON.parse(generatedResponse);
-        console.log("Parsed email response:", emailResponse);
-      } catch (e) {
-        console.error("Failed to parse generated response:", e);
-      }
-    }
-    
+    const generatedResponse = data?.data?.Get?.Filip?.[0]?._additional?.generate?.singleResult;
+
     // Extract historical emails
     const historicalEmails: HistoricalEmail[] = data?.data?.Get?.Filip?.map((email: any) => ({
       id: email._additional.id,
       properties: {
-        customer_email: email.customer_email,
-        customer_name: email.customer_name,
-        date: email.date,
-        content: email.content,
-        category: email.category
+        customer_email: email.properties.customer_email,
+        customer_name: email.properties.customer_name,
+        date: email.properties.date,
+        content: email.properties.content,
+        category: email.properties.category
       },
       metadata: {
         distance: email._additional.distance
@@ -240,7 +232,7 @@ Return an answer in a following format:
     console.log("Processed historical emails:", historicalEmails.length);
 
     return {
-      response: emailResponse,
+      response: generatedResponse,
       historicalEmails,
       usingMockData: false
     };
