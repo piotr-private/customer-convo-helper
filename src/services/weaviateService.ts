@@ -1,3 +1,5 @@
+import { Toast } from "@/components/ui/toast";
+
 // Weaviate connection details
 const WCD_URL = "https://1hsyybfpqouabtfuyxidg.c0.europe-west3.gcp.weaviate.cloud";
 const WCD_API_KEY = "Q2sQTPxMp8UMuNCRuDec4o50O1OZ6zKl5OwO";
