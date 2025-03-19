@@ -210,10 +210,8 @@ Return an answer in a following format:
     const historicalEmails: HistoricalEmail[] = data?.data?.Get?.Filip?.map((email: any) => ({
       id: email._additional.id,
       properties: {
-        customer_email: email.properties.customer_email,
-        customer_name: email.properties.customer_name,
-        date: email.properties.date,
-        content: email.properties.content,
+        customer_email: email.properties.replying_to,
+        content: email.properties.my_reply,
         category: email.properties.category
       },
       metadata: {
