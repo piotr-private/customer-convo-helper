@@ -170,10 +170,10 @@ Return an answer in a following format:
             Get {
               Filip(
                 nearText: {
-                  concepts: ["${customerEmail.replace(/"/g, '\\"')}"]
-                  targetVectors: ["replying_to_vector"]
+                  task: ["${task}"]
+                  targetVector: "replying_to_vector"
                 }
-                limit: 4
+                limit: 20
               ) {
                 _additional {
                   id
