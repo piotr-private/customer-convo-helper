@@ -6,6 +6,9 @@ const WCD_URL = "https://1hsyybfpqouabtfuyxidg.c0.europe-west3.gcp.weaviate.clou
 const WCD_API_KEY = "Q2sQTPxMp8UMuNCRuDec4o50O1OZ6zKl5OwO";
 const OPENAI_KEY = "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";
 
+// API timeout configuration (in milliseconds) - 30 seconds
+const API_TIMEOUT = 30000;
+
 // Response types
 export interface EmailResponse {
   answer: string;
@@ -116,6 +119,20 @@ const getWeaviateClient = (() => {
   };
 })();
 
+// Timeout promise for fetch operations
+const fetchWithTimeout = async (resource: RequestInfo, options: RequestInit, timeout: number): Promise<Response> => {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  
+  const response = await fetch(resource, {
+    ...options,
+    signal: controller.signal
+  });
+  
+  clearTimeout(id);
+  return response;
+};
+
 export async function getResponseSuggestion(customerEmail: string): Promise<{
   response: EmailResponse | null;
   historicalEmails: HistoricalEmail[];
@@ -142,9 +159,9 @@ Return an answer in a following format:
 "justification": provide your thought process behind making changes to the email suggested, compared to "used_emails" list. As stated previously, avoid paraphrases and every paraphrase should have a solid justification.
 }`;
 
-    // Make the API call to Weaviate
-    console.log("Making request to Weaviate GraphQL endpoint");
-    const response = await fetch(`${client.baseUrl}/v1/graphql`, {
+    // Make the API call to Weaviate with extended timeout
+    console.log("Making request to Weaviate GraphQL endpoint with extended timeout");
+    const response = await fetchWithTimeout(`${client.baseUrl}/v1/graphql`, {
       method: 'POST',
       headers: client.headers,
       mode: 'cors', // Explicitly set cors mode
@@ -183,7 +200,7 @@ Return an answer in a following format:
           }
         `
       })
-    });
+    }, API_TIMEOUT);
 
     if (!response.ok) {
       throw new Error(`API request failed with status ${response.status}`);
@@ -229,6 +246,19 @@ Return an answer in a following format:
     };
   } catch (error) {
     console.error("Error fetching from Weaviate:", error);
+    
+    // Check if this is a timeout error
+    const isTimeoutError = error instanceof DOMException && error.name === "AbortError";
+    if (isTimeoutError) {
+      console.log("Request timed out after waiting for LLM response");
+      toast.error("Request timed out waiting for the AI response. Try again with a simpler query.");
+      return {
+        response: null,
+        historicalEmails: [],
+        error: "The AI took too long to respond. Please try again with a simpler query.",
+        usingMockData: false
+      };
+    }
     
     // Check if this is a CORS error
     const isCORSError = error instanceof TypeError && 

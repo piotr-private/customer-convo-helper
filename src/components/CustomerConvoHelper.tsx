@@ -5,7 +5,7 @@ import ResponseSuggestion from './ResponseSuggestion';
 import HistoricalQuestions from './HistoricalQuestions';
 import { getResponseSuggestion, EmailResponse, HistoricalEmail } from '@/services/weaviateService';
 import { toast } from 'sonner';
-import { AlertCircle, Info } from 'lucide-react';
+import { AlertCircle, Info, Clock } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const CustomerConvoHelper: React.FC = () => {
@@ -14,15 +14,23 @@ const CustomerConvoHelper: React.FC = () => {
   const [historicalEmails, setHistoricalEmails] = useState<HistoricalEmail[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [usingMockData, setUsingMockData] = useState(false);
+  const [processingStartTime, setProcessingStartTime] = useState<number | null>(null);
 
   const handleSubmit = async (customerEmail: string) => {
     setIsLoading(true);
     setError(null);
     setUsingMockData(false);
+    setProcessingStartTime(Date.now());
+    
+    // Show processing toast that won't be automatically dismissed
+    const processingToastId = toast.loading("Processing your query with AI. This may take up to 30 seconds...");
     
     try {
       console.log("Submitting customer email for processing");
       const result = await getResponseSuggestion(customerEmail);
+      
+      // Dismiss the processing toast
+      toast.dismiss(processingToastId);
       
       if (result.error) {
         setError(result.error);
@@ -39,15 +47,20 @@ const CustomerConvoHelper: React.FC = () => {
       if (!result.response && result.historicalEmails.length === 0) {
         toast.warning("No relevant responses found. Try being more specific.");
       } else {
-        toast.success("Response generated successfully");
+        const processingTime = processingStartTime ? ((Date.now() - processingStartTime) / 1000).toFixed(1) : "?";
+        toast.success(`Response generated in ${processingTime} seconds`);
       }
     } catch (error) {
+      // Dismiss the processing toast
+      toast.dismiss(processingToastId);
+      
       console.error("Error:", error);
       const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
+      setProcessingStartTime(null);
     }
   };
 
@@ -64,6 +77,17 @@ const CustomerConvoHelper: React.FC = () => {
       </h1>
       
       <EmailForm onSubmit={handleSubmit} isLoading={isLoading} />
+      
+      {isLoading && (
+        <Alert className="mt-6 bg-amber-50 border-amber-200">
+          <Clock className="h-4 w-4 text-amber-500 animate-pulse" />
+          <AlertTitle className="text-amber-700">Processing</AlertTitle>
+          <AlertDescription className="text-amber-600">
+            The AI is analyzing your query and generating a response. This could take up to 30 seconds 
+            as it searches for similar emails and crafts a personalized response.
+          </AlertDescription>
+        </Alert>
+      )}
       
       {usingMockData && (
         <Alert className="mt-6 bg-blue-50 border-blue-200">
