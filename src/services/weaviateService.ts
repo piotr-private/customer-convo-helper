@@ -175,19 +175,19 @@ Return an answer in a following format:
                 }
                 limit: 20
               ) {
+                replying_to
+                my_reply
+                type
+                replying_to_thread
+                category
                 _additional {
                   id
                   distance
                   generate(
-                    singlePrompt: """${task}"""
+                    groupedTask: """${task}"""
                   ) {
-                    singleResult
+                    groupedResult
                   }
-                }
-                properties {
-                  replying_to
-                  my_reply
-                  category
                 }
               }
             }
@@ -206,18 +206,18 @@ Return an answer in a following format:
     // Extract the generated response
     const generatedResponse = data?.data?.Get?.Filip?.[0]?._additional?.generate?.singleResult;
 
-    // // Extract historical emails
-    // const historicalEmails: HistoricalEmail[] = data?.data?.Get?.Filip?.map((email: any) => ({
-    //   id: email._additional.id,
-    //   properties: {
-    //     customer_email: email.properties.replying_to,
-    //     content: email.properties.my_reply,
-    //     category: email.properties.category
-    //   },
-    //   metadata: {
-    //     distance: email._additional.distance
-    //   }
-    // })) || [];
+    // Extract historical emails
+     const historicalEmails: HistoricalEmail[] = data?.data?.Get?.Filip?.map((email: any) => ({
+       id: email._additional.id,
+       properties: {
+         customer_email: email.replying_to,
+         content: email.my_reply,
+         category: email.category
+       },
+       metadata: {
+         distance: email._additional.distance
+       }
+     })) || [];
 
     console.log("Processed historical emails:", historicalEmails.length);
 
