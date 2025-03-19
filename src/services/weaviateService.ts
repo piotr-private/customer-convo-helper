@@ -120,23 +120,10 @@ export async function getResponseSuggestion(customerEmail: string): Promise<{
   response: EmailResponse | null;
   historicalEmails: HistoricalEmail[];
   error?: string;
+  usingMockData?: boolean;
 }> {
   try {
     console.log("Getting response suggestion for:", customerEmail);
-    
-    // Check if we're in a development or production environment
-    const isLocalhost = window.location.hostname === "localhost" || 
-                        window.location.hostname === "127.0.0.1";
-    
-    // In production, return mock data since direct Weaviate API calls will fail due to CORS
-    if (!isLocalhost) {
-      console.log("Using mock data due to CORS limitations");
-      const mockData = generateMockResponse(customerEmail);
-      return {
-        response: mockData.response,
-        historicalEmails: mockData.historicalEmails
-      };
-    }
     
     // Get client configuration
     const client = getWeaviateClient();
@@ -237,19 +224,41 @@ Return an answer in a following format:
 
     return {
       response: emailResponse,
-      historicalEmails
+      historicalEmails,
+      usingMockData: false
     };
   } catch (error) {
     console.error("Error fetching from Weaviate:", error);
-    toast.error("Failed to get response from Weaviate");
     
-    // Return mock data as fallback when there's an error
-    console.log("Falling back to mock data due to error");
-    const mockData = generateMockResponse(customerEmail);
+    // Check if this is a CORS error
+    const isCORSError = error instanceof TypeError && 
+                       (error.message.includes("Failed to fetch") || 
+                        error.message.includes("NetworkError") || 
+                        error.message.includes("Network request failed"));
+    
+    if (isCORSError) {
+      console.log("CORS error detected, falling back to mock data");
+      toast.error("CORS policy prevented API access, using demo data instead");
+      
+      // Return mock data as fallback when there's a CORS error
+      const mockData = generateMockResponse(customerEmail);
+      
+      return {
+        response: mockData.response,
+        historicalEmails: mockData.historicalEmails,
+        usingMockData: true
+      };
+    }
+    
+    // For other errors, return a more specific error message
+    const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+    toast.error(`Error: ${errorMessage}`);
     
     return {
-      response: mockData.response,
-      historicalEmails: mockData.historicalEmails
+      response: null,
+      historicalEmails: [],
+      error: errorMessage,
+      usingMockData: false
     };
   }
 }

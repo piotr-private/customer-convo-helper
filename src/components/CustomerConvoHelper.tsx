@@ -33,11 +33,8 @@ const CustomerConvoHelper: React.FC = () => {
       setResponse(result.response);
       setHistoricalEmails(result.historicalEmails);
       
-      // Check if we're using mock data (which we can detect by looking at the environment)
-      const isLocalhost = window.location.hostname === "localhost" || 
-                          window.location.hostname === "127.0.0.1";
-      const isProd = !isLocalhost;
-      setUsingMockData(isProd);
+      // Check if we're using mock data based on the API response
+      setUsingMockData(result.usingMockData || false);
       
       if (!result.response && result.historicalEmails.length === 0) {
         toast.warning("No relevant responses found. Try being more specific.");
