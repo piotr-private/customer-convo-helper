@@ -173,11 +173,6 @@ Return an answer in a following format:
                   concepts: ["${customerEmail.replace(/"/g, '\\"')}"]
                   targetVectors: ["replying_to_vector"]
                 }
-                where: {
-                  path: ["category"]
-                  operator: Equal
-                  valueText: "Having question or objection"
-                }
                 limit: 4
               ) {
                 _additional {
