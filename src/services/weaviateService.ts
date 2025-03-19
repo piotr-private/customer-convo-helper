@@ -185,10 +185,8 @@ Return an answer in a following format:
                   }
                 }
                 properties {
-                  customer_email
-                  customer_name
-                  date
-                  content
+                  replying_to
+                  my_reply
                   category
                 }
               }
