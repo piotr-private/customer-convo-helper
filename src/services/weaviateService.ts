@@ -1,6 +1,6 @@
 
 import { Toast } from "@/components/ui/toast";
-import { getConfig } from "./configService";
+import { getConfig, refreshConfig } from "./configService";
 
 // Response types
 export interface EmailResponse {
@@ -77,11 +77,25 @@ const generateMockResponse = (customerEmail: string): {
 };
 
 // Initialize Weaviate client connection
-const initWeaviateClient = () => {
+const initWeaviateClient = async () => {
   console.log("Initializing Weaviate client connection configuration");
   
-  // Get configuration from the config service
+  // Try to refresh the config to ensure we have the latest from Supabase
+  await refreshConfig();
+  
+  // Get configuration
   const config = getConfig().weaviate;
+  
+  // Check if we have the required API keys
+  if (!config.apiKey || !config.openAIKey) {
+    console.warn("Missing Weaviate or OpenAI API keys. Using fallback if available.");
+    // refreshConfig() already tries to use fallbacks, so we just get the config again
+    const updatedConfig = getConfig().weaviate;
+    
+    if (!updatedConfig.apiKey || !updatedConfig.openAIKey) {
+      throw new Error("Failed to initialize Weaviate client: Missing API keys");
+    }
+  }
   
   // Return the configuration that will be used for requests
   return {
@@ -98,10 +112,25 @@ const initWeaviateClient = () => {
 const getWeaviateClient = (() => {
   // Use closure to maintain a single client configuration
   let clientConfig: ReturnType<typeof initWeaviateClient> | null = null;
+  let clientPromise: Promise<ReturnType<typeof initWeaviateClient>> | null = null;
   
-  return () => {
+  return async () => {
     if (!clientConfig) {
-      clientConfig = initWeaviateClient();
+      // If we don't have a client config yet, but have a pending promise, wait for it
+      if (clientPromise) {
+        clientConfig = await clientPromise;
+        return clientConfig;
+      }
+      
+      // Initialize the client config
+      clientPromise = initWeaviateClient();
+      try {
+        clientConfig = await clientPromise;
+      } catch (error) {
+        console.error("Failed to initialize Weaviate client:", error);
+        clientPromise = null;
+        throw error;
+      }
     }
     return clientConfig;
   };
@@ -131,7 +160,7 @@ export async function getResponseSuggestion(customerEmail: string): Promise<{
     console.log("Getting response suggestion for:", customerEmail);
     
     // Get client configuration
-    const client = getWeaviateClient();
+    const client = await getWeaviateClient();
     
     // Get timeout configuration
     const API_TIMEOUT = getConfig().apiTimeout;

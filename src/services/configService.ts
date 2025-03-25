@@ -1,26 +1,76 @@
 
-// Configuration service to manage environment variables and secrets
-// In a production environment, these would be stored in environment variables
-// or fetched from a secure backend service like Supabase
+import { getServiceCredentials, getFallbackCredentials } from './apiCredentialsService';
+
+// Configuration cache to avoid unnecessary DB calls
+let configCache: Record<string, any> = {};
 
 /**
  * Get environment configuration with appropriate defaults
  * This approach allows for future expansion to fetch from backend
  */
 export const getConfig = () => {
-  // Default configuration - in production these would be fetched
-  // from environment variables or a backend service
-  return {
-    // Weaviate connection details
+  // Return cached config if available
+  if (Object.keys(configCache).length > 0) {
+    return configCache;
+  }
+  
+  // Default configuration
+  const defaultConfig = {
+    // Weaviate connection details (fallback values)
     weaviate: {
       url: "https://1hsyybfpqouabtfuyxidg.c0.europe-west3.gcp.weaviate.cloud",
-      apiKey: "Q2sQTPxMp8UMuNCRuDec4o50O1OZ6zKl5OwO",
-      openAIKey: "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",
+      apiKey: "", // Will be populated from Supabase
+      openAIKey: "", // Will be populated from Supabase
     },
     
     // API timeout configuration (in milliseconds)
     apiTimeout: 30000, // 30 seconds
   };
+  
+  // Cache and return the config
+  configCache = defaultConfig;
+  return configCache;
+};
+
+/**
+ * Refreshes the configuration by fetching the latest values from Supabase
+ * This should be called when the application starts or when config changes are needed
+ */
+export const refreshConfig = async (): Promise<void> => {
+  try {
+    console.log("Refreshing application configuration from Supabase");
+    
+    // Get Weaviate credentials from Supabase
+    const weaviateCredentials = await getServiceCredentials('weaviate');
+    
+    if (weaviateCredentials) {
+      // Update the config cache with values from Supabase
+      configCache.weaviate = {
+        url: "https://1hsyybfpqouabtfuyxidg.c0.europe-west3.gcp.weaviate.cloud",
+        apiKey: weaviateCredentials.api_key,
+        openAIKey: weaviateCredentials.additional_keys.openai_key || "",
+      };
+      
+      console.log("Configuration updated successfully from Supabase");
+    } else {
+      // Try to use fallback credentials
+      const fallbackCredentials = getFallbackCredentials('weaviate');
+      
+      if (fallbackCredentials) {
+        configCache.weaviate = {
+          url: "https://1hsyybfpqouabtfuyxidg.c0.europe-west3.gcp.weaviate.cloud",
+          apiKey: fallbackCredentials.api_key,
+          openAIKey: fallbackCredentials.additional_keys.openai_key || "",
+        };
+        
+        console.warn("Using fallback configuration because Supabase data couldn't be retrieved");
+      } else {
+        console.error("Failed to get weaviate credentials from Supabase and no fallback is available");
+      }
+    }
+  } catch (error) {
+    console.error("Error refreshing configuration:", error);
+  }
 };
 
 // Helper function to check if we're in a development environment
@@ -29,9 +79,3 @@ export const isDevelopment = () => {
     window.location.hostname === 'localhost' || 
     window.location.hostname === '127.0.0.1';
 };
-
-/**
- * IMPORTANT: In a real production environment, this would be replaced
- * with a secure backend service call that would fetch secrets without
- * exposing them in the frontend code.
- */
