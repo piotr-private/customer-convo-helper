@@ -1,12 +1,6 @@
+
 import { Toast } from "@/components/ui/toast";
-
-// Weaviate connection details
-const WCD_URL = "https://1hsyybfpqouabtfuyxidg.c0.europe-west3.gcp.weaviate.cloud";
-const WCD_API_KEY = "Q2sQTPxMp8UMuNCRuDec4o50O1OZ6zKl5OwO";
-const OPENAI_KEY = "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";
-
-// API timeout configuration (in milliseconds) - 30 seconds
-const API_TIMEOUT = 30000;
+import { getConfig } from "./configService";
 
 // Response types
 export interface EmailResponse {
@@ -86,12 +80,15 @@ const generateMockResponse = (customerEmail: string): {
 const initWeaviateClient = () => {
   console.log("Initializing Weaviate client connection configuration");
   
+  // Get configuration from the config service
+  const config = getConfig().weaviate;
+  
   // Return the configuration that will be used for requests
   return {
-    baseUrl: WCD_URL,
+    baseUrl: config.url,
     headers: {
-      'Authorization': `Bearer ${WCD_API_KEY}`,
-      'X-OpenAI-Api-Key': OPENAI_KEY,
+      'Authorization': `Bearer ${config.apiKey}`,
+      'X-OpenAI-Api-Key': config.openAIKey,
       'Content-Type': 'application/json'
     }
   };
@@ -135,6 +132,9 @@ export async function getResponseSuggestion(customerEmail: string): Promise<{
     
     // Get client configuration
     const client = getWeaviateClient();
+    
+    // Get timeout configuration
+    const API_TIMEOUT = getConfig().apiTimeout;
     
     // Format the task for the LLM
     const task = `Based on the following examples of my previous communication, reply to this email: '${customerEmail}'
