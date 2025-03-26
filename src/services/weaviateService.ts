@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import { getConfig, refreshConfig, isDevelopment } from "./configService";
 
@@ -315,8 +316,6 @@ Return an answer in a following format:
       const historicalEmails: HistoricalEmail[] = data?.data?.Get?.Filip2?.map((email: any) => ({
         id: email._additional.id,
         properties: {
-          customer_name: "Customer",
-          customer_email: "customer@example.com",
           replying_to: email.replying_to || "",
           my_reply: email.my_reply || "",
           category: email.category || "",

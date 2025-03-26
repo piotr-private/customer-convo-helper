@@ -40,7 +40,7 @@ const HistoricalQuestions: React.FC<HistoricalQuestionsProps> = ({ emails }) => 
               </div>
               <div className="flex items-center">
                 <span className="text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded-full">
-                  {formatDate(email.properties.date)}
+                  {email.properties.date && formatDate(email.properties.date)}
                 </span>
                 <span className="ml-2 text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded-full">
                   {Math.round((1 - email.metadata.distance) * 100)}% match
@@ -48,13 +48,13 @@ const HistoricalQuestions: React.FC<HistoricalQuestionsProps> = ({ emails }) => 
               </div>
             </div>
             <div className="p-4">
-            <div className="bg-secondary/50 p-3 flex justify-between items-center">
-            <span className="font-small">Replying to</span>
-            </div>
+              <div className="bg-secondary/50 p-3 flex justify-between items-center">
+                <span className="font-small">Replying to</span>
+              </div>
               <p className="text-sm whitespace-pre-line">{email.properties.replying_to}</p>
               <div className="bg-secondary/50 p-3 flex justify-between items-center">
-            <span className="font-small">My previous reply</span>
-            </div>
+                <span className="font-small">My previous reply</span>
+              </div>
               <p className="text-sm whitespace-pre-line">{email.properties.my_reply}</p>
             </div>
           </Card>
