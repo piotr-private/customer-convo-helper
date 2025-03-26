@@ -21,61 +21,6 @@ export interface HistoricalEmail {
   };
 }
 
-// Generate mock data for demonstration purposes
-// This function simulates the response we would get from Weaviate
-const generateMockResponse = (customerEmail: string): {
-  response: EmailResponse;
-  historicalEmails: HistoricalEmail[];
-} => {
-  console.log("Generating mock response for:", customerEmail);
-  
-  // Simulated response based on the customer email
-  const response: EmailResponse = {
-    answer: `Hi there,\n\nThanks for reaching out! I understand you have a question about ${customerEmail.includes('@') ? 'your account' : customerEmail}.\n\nWe definitely can help with that. Based on similar questions we've handled before, I recommend checking out our FAQ section or I can walk you through the solution directly.\n\nLet me know if you need any additional information or have other questions!\n\nBest regards,\nFilip`,
-    source: "Previous email to Cameron about product features",
-    justification: "I maintained the friendly tone and direct approach from previous communications. I acknowledged the customer's question and offered both self-service and direct assistance options, which is consistent with the communication style in similar past emails."
-  };
-  
-  // Generate some realistic-looking historical emails
-  const historicalEmails: HistoricalEmail[] = [
-    {
-      id: "email1",
-      properties: {
-        my_reply: "Hi John, thanks for your question about our product features. We do offer what you're looking for, and I'd be happy to schedule a demo to show you how it works. Let me know what time works best for you!",
-        category: "Having question or objection",
-        replying_to: ""
-      },
-      metadata: {
-        distance: 0.15
-      }
-    },
-    {
-      id: "email2",
-      properties: {
-        my_reply: "Hello Sarah, I understand your concern about pricing. Our premium plan does include all the features you mentioned, and there are no hidden fees. I've attached a detailed comparison sheet for your reference. Feel free to reach out if you have any other questions!",
-        category: "Having question or objection",
-        replying_to: ""
-      },
-      metadata: {
-        distance: 0.25
-      }
-    },
-    {
-      id: "email3",
-      properties: {
-        my_reply: "Hi Michael, regarding your question about integration capabilities - yes, our platform can integrate with the software you're currently using. We use standard APIs for most integrations, and I'm happy to connect you with our technical team to discuss the specific requirements for your setup.",
-        category: "Having question or objection",
-        replying_to: ""
-      },
-      metadata: {
-        distance: 0.35
-      }
-    }
-  ];
-  
-  return { response, historicalEmails };
-};
-
 // Initialize Weaviate client connection
 const initWeaviateClient = async () => {
   console.log("Initializing Weaviate client connection configuration");
@@ -88,13 +33,8 @@ const initWeaviateClient = async () => {
   
   // Check if we have the required API keys
   if (!config.apiKey || !config.openAIKey) {
-    console.warn("Missing Weaviate or OpenAI API keys. Using fallback if available.");
-    // refreshConfig() already tries to use fallbacks, so we just get the config again
-    const updatedConfig = getConfig().weaviate;
-    
-    if (!updatedConfig.apiKey || !updatedConfig.openAIKey) {
-      throw new Error("Failed to initialize Weaviate client: Missing API keys");
-    }
+    console.error("Missing Weaviate or OpenAI API keys");
+    throw new Error("Failed to initialize Weaviate client: Missing API keys");
   }
   
   // Return the configuration that will be used for requests
@@ -148,6 +88,61 @@ const fetchWithTimeout = async (resource: RequestInfo, options: RequestInit, tim
   
   clearTimeout(id);
   return response;
+};
+
+// Generate mock data for demonstration purposes
+// This function simulates the response we would get from Weaviate
+const generateMockResponse = (customerEmail: string): {
+  response: EmailResponse;
+  historicalEmails: HistoricalEmail[];
+} => {
+  console.log("Generating mock response for:", customerEmail);
+  
+  // Simulated response based on the customer email
+  const response: EmailResponse = {
+    answer: `Hi there,\n\nThanks for reaching out! I understand you have a question about ${customerEmail.includes('@') ? 'your account' : customerEmail}.\n\nWe definitely can help with that. Based on similar questions we've handled before, I recommend checking out our FAQ section or I can walk you through the solution directly.\n\nLet me know if you need any additional information or have other questions!\n\nBest regards,\nFilip`,
+    source: "Previous email to Cameron about product features",
+    justification: "I maintained the friendly tone and direct approach from previous communications. I acknowledged the customer's question and offered both self-service and direct assistance options, which is consistent with the communication style in similar past emails."
+  };
+  
+  // Generate some realistic-looking historical emails
+  const historicalEmails: HistoricalEmail[] = [
+    {
+      id: "email1",
+      properties: {
+        my_reply: "Hi John, thanks for your question about our product features. We do offer what you're looking for, and I'd be happy to schedule a demo to show you how it works. Let me know what time works best for you!",
+        category: "Having question or objection",
+        replying_to: ""
+      },
+      metadata: {
+        distance: 0.15
+      }
+    },
+    {
+      id: "email2",
+      properties: {
+        my_reply: "Hello Sarah, I understand your concern about pricing. Our premium plan does include all the features you mentioned, and there are no hidden fees. I've attached a detailed comparison sheet for your reference. Feel free to reach out if you have any other questions!",
+        category: "Having question or objection",
+        replying_to: ""
+      },
+      metadata: {
+        distance: 0.25
+      }
+    },
+    {
+      id: "email3",
+      properties: {
+        my_reply: "Hi Michael, regarding your question about integration capabilities - yes, our platform can integrate with the software you're currently using. We use standard APIs for most integrations, and I'm happy to connect you with our technical team to discuss the specific requirements for your setup.",
+        category: "Having question or objection",
+        replying_to: ""
+      },
+      metadata: {
+        distance: 0.35
+      }
+    }
+  ];
+  
+  return { response, historicalEmails };
 };
 
 export async function getResponseSuggestion(customerEmail: string): Promise<{

@@ -1,5 +1,5 @@
 
-import { getServiceCredentials, getFallbackCredentials } from './apiCredentialsService';
+import { getServiceCredentials } from './apiCredentialsService';
 
 // Configuration cache to avoid unnecessary DB calls
 let configCache: Record<string, any> = {};
@@ -16,7 +16,7 @@ export const getConfig = () => {
   
   // Default configuration
   const defaultConfig = {
-    // Weaviate connection details (fallback values)
+    // Weaviate connection details
     weaviate: {
       url: "https://1hsyybfpqouabtfuyxidg.c0.europe-west3.gcp.weaviate.cloud",
       apiKey: "", // Will be populated from Supabase
@@ -40,33 +40,23 @@ export const refreshConfig = async (): Promise<void> => {
   try {
     console.log("Refreshing application configuration from Supabase");
     
-    // Get Weaviate credentials from Supabase
+    // Get Weaviate credentials
     const weaviateCredentials = await getServiceCredentials('weaviate');
     
-    if (weaviateCredentials) {
-      // Update the config cache with values from Supabase
-      configCache.weaviate = {
-        url: "https://1hsyybfpqouabtfuyxidg.c0.europe-west3.gcp.weaviate.cloud",
-        apiKey: weaviateCredentials.api_key,
-        openAIKey: weaviateCredentials.additional_keys.openai_key || "",
-      };
-      
+    // Get OpenAI credentials separately
+    const openAICredentials = await getServiceCredentials('openai');
+    
+    // Update the config cache with values from Supabase
+    configCache.weaviate = {
+      url: "https://1hsyybfpqouabtfuyxidg.c0.europe-west3.gcp.weaviate.cloud",
+      apiKey: weaviateCredentials?.api_key || "",
+      openAIKey: openAICredentials?.api_key || "",
+    };
+    
+    if (weaviateCredentials && openAICredentials) {
       console.log("Configuration updated successfully from Supabase");
     } else {
-      // Try to use fallback credentials
-      const fallbackCredentials = getFallbackCredentials('weaviate');
-      
-      if (fallbackCredentials) {
-        configCache.weaviate = {
-          url: "https://1hsyybfpqouabtfuyxidg.c0.europe-west3.gcp.weaviate.cloud",
-          apiKey: fallbackCredentials.api_key,
-          openAIKey: fallbackCredentials.additional_keys.openai_key || "",
-        };
-        
-        console.warn("Using fallback configuration because Supabase data couldn't be retrieved");
-      } else {
-        console.error("Failed to get weaviate credentials from Supabase and no fallback is available");
-      }
+      console.error("Failed to retrieve one or more API credentials from Supabase");
     }
   } catch (error) {
     console.error("Error refreshing configuration:", error);
