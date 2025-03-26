@@ -14,7 +14,16 @@ const queryClient = new QueryClient();
 const App = () => {
   // Initialize configuration when the app starts
   useEffect(() => {
-    refreshConfig().catch(console.error);
+    const initializeConfig = async () => {
+      try {
+        await refreshConfig();
+        console.log("Configuration initialized successfully");
+      } catch (error) {
+        console.error("Failed to initialize configuration:", error);
+      }
+    };
+    
+    initializeConfig();
   }, []);
 
   return (

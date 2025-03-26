@@ -94,7 +94,12 @@ const initWeaviateClient = async () => {
   console.log("Initializing Weaviate client connection configuration");
   
   // Try to refresh the config to ensure we have the latest from Supabase
-  await refreshConfig();
+  try {
+    await refreshConfig();
+  } catch (error) {
+    console.error("Error refreshing configuration:", error);
+    throw new Error("Failed to initialize Weaviate client: Error refreshing configuration");
+  }
   
   // Get configuration
   const config = getConfig().weaviate;
@@ -193,15 +198,16 @@ export async function getResponseSuggestion(customerEmail: string): Promise<{
   try {
     console.log("Getting response suggestion for:", customerEmail);
     
-    // Get client configuration
-    const client = await getWeaviateClient();
-    
-    // Get timeout configuration with fallback
-    let API_TIMEOUT = getConfig().apiTimeout || 30000; // Default to 30 seconds if config value is undefined
-    console.log(`Using API timeout: ${API_TIMEOUT}ms`);
-    
-    // Format the task for the LLM
-    const task = `Edit the following examples of my past communication into one email that is a good response to this email from my potential client: ${customerEmail}
+    try {
+      // Get client configuration
+      const client = await getWeaviateClient();
+      
+      // Get timeout configuration with fallback
+      let API_TIMEOUT = getConfig().apiTimeout || 30000; // Default to 30 seconds if config value is undefined
+      console.log(`Using API timeout: ${API_TIMEOUT}ms`);
+      
+      // Format the task for the LLM
+      const task = `Edit the following examples of my past communication into one email that is a good response to this email from my potential client: ${customerEmail}
 
 Whenever possible, use THE EXACT phrases from my past communication. I want the response to be AS SIMILAR AS POSSIBLE to what I wrote in the past, while answering the email from my potential client accurately.
 Return an answer in a following format:
@@ -211,10 +217,9 @@ Return an answer in a following format:
 "justification": provide your thought process behind making changes to the email suggested, compared to "used_emails" list. As stated previously, avoid paraphrases and every paraphrase should have a solid justification.
 }`;
 
-    // Make the API call to Weaviate with extended timeout
-    console.log(`Making request to Weaviate GraphQL endpoint (${client.baseUrl}) with ${API_TIMEOUT}ms timeout`);
-    
-    try {
+      // Make the API call to Weaviate with extended timeout
+      console.log(`Making request to Weaviate GraphQL endpoint (${client.baseUrl}) with ${API_TIMEOUT}ms timeout`);
+      
       const response = await fetchWithTimeout(`${client.baseUrl}/v1/graphql`, {
         method: 'POST',
         headers: client.headers,
@@ -363,7 +368,6 @@ Return an answer in a following format:
       toast.error("CORS policy prevented API access, using demo data instead");
       
       // Return mock data as fallback when there's a CORS error
-      // Fallback to mock data only if there's a real error
       const mockData = generateMockResponse(customerEmail);
       
       return {

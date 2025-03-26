@@ -60,6 +60,7 @@ export const refreshConfig = async (): Promise<void> => {
     }
   } catch (error) {
     console.error("Error refreshing configuration:", error);
+    throw error; // Re-throw the error so it can be caught by callers
   }
 };
 
